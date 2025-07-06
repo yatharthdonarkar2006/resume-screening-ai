@@ -4,10 +4,18 @@ import subprocess
 import sys
 import os
 
+# Global variable to store the loaded model
+_nlp_model = None
+
 def load_spacy_model():
     """Load spaCy model, downloading it if necessary."""
+    global _nlp_model
+    if _nlp_model is not None:
+        return _nlp_model
+    
     try:
-        return spacy.load('en_core_web_sm')
+        _nlp_model = spacy.load('en_core_web_sm')
+        return _nlp_model
     except OSError:
         print("Downloading spaCy model 'en_core_web_sm'...")
         try:
@@ -15,19 +23,19 @@ def load_spacy_model():
             subprocess.check_call([
                 sys.executable, "-m", "spacy", "download", "en_core_web_sm"
             ])
-            return spacy.load('en_core_web_sm')
+            _nlp_model = spacy.load('en_core_web_sm')
+            return _nlp_model
         except (subprocess.CalledProcessError, OSError):
             print("Failed to download spaCy model automatically.")
             # Fallback: try to use a basic model or create a simple text processor
             try:
                 # Try to create a basic model without downloading
-                return spacy.blank('en')
+                _nlp_model = spacy.blank('en')
+                return _nlp_model
             except:
                 print("Could not load any spaCy model. Using fallback text processing.")
+                _nlp_model = None
                 return None
-
-# Initialize nlp model
-nlp = load_spacy_model()
 
 def extract_text_from_pdf(pdf_path):
     """Extract text from PDF file."""
@@ -44,6 +52,7 @@ def extract_text_from_pdf(pdf_path):
 
 def parse_resume(text):
     """Parse resume text using spaCy or fallback processing."""
+    nlp = load_spacy_model()
     if nlp is None:
         # Fallback: return basic text processing
         return text

@@ -2,24 +2,25 @@ import streamlit as st
 import tempfile
 import os
 import pandas as pd
-from resume_parser import extract_text_from_pdf, load_spacy_model
 from matching import rank_resumes
 from utils import export_results
+import pdfplumber
+
+def extract_text_from_pdf(pdf_path):
+    """Extract text from PDF file without spaCy dependency."""
+    text = ""
+    try:
+        with pdfplumber.open(pdf_path) as pdf:
+            for page in pdf.pages:
+                page_text = page.extract_text() or ""
+                text += page_text + "\n"
+    except Exception as e:
+        st.error(f"Error extracting text from PDF: {e}")
+        return ""
+    return text.strip()
 
 st.title('AI-Powered Resume Screening Tool')
-
-# Check spaCy availability on first use
-@st.cache_resource
-def check_spacy_availability():
-    """Check if spaCy model is available."""
-    return load_spacy_model() is not None
-
-# Show status based on spaCy availability
-spacy_available = check_spacy_availability()
-if spacy_available:
-    st.success("✅ AI-powered resume screening is ready!")
-else:
-    st.warning("⚠️ Advanced NLP features are not available. Using basic text processing.")
+st.success("✅ Resume screening tool is ready!")
 
 job_desc = st.text_area('Paste Job Description Here')
 resume_files = st.file_uploader('Upload Resume PDFs', type='pdf', accept_multiple_files=True)
