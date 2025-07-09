@@ -1,3 +1,1 @@
-# System dependencies for spaCy
-python3-dev
-build-essential 
+# No system dependencies needed for this minimal version 
