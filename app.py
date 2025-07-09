@@ -5,19 +5,30 @@ import pandas as pd
 from matching import rank_resumes
 from utils import export_results
 import pdfplumber
+import pytesseract
+from pdf2image import convert_from_path
+from PIL import Image
 
 def extract_text_from_pdf(pdf_path):
-    """Extract text from PDF file without spaCy dependency."""
+    """Extract text from PDF file, using OCR if needed."""
     text = ""
     try:
+        # First, try to extract text normally
         with pdfplumber.open(pdf_path) as pdf:
             for page in pdf.pages:
                 page_text = page.extract_text() or ""
                 text += page_text + "\n"
+        if text.strip():
+            return text.strip()
+        # If no text found, use OCR
+        ocr_text = ""
+        images = convert_from_path(pdf_path)
+        for img in images:
+            ocr_text += pytesseract.image_to_string(img) + "\n"
+        return ocr_text.strip()
     except Exception as e:
         st.error(f"Error extracting text from PDF: {e}")
         return ""
-    return text.strip()
 
 st.title('AI-Powered Resume Screening Tool')
 st.success("✅ Resume screening tool is ready!")
